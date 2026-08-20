@@ -6,10 +6,16 @@ const qs = require('qs');
 const crypto = require('crypto');
 require('dotenv').config();
 
+// Support both the deployed variable names and the names documented in README.md
+const CLIENT_ID = process.env.CLIENT_ID || process.env.SALESFORCE_CONSUMER_KEY;
+const CLIENT_SECRET = process.env.CLIENT_SECRET || process.env.SALESFORCE_CONSUMER_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI || process.env.SALESFORCE_CALLBACK_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 const app = express();
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: FRONTEND_URL,
     credentials: true
 }));
 
@@ -100,8 +106,8 @@ app.get('/auth/login', (req, res) => {
 
     const params = {
         response_type: 'code',
-        client_id: process.env.CLIENT_ID,
-        redirect_uri: process.env.REDIRECT_URI,
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
         state: state,
         code_challenge: challenge,
         code_challenge_method: 'S256'
@@ -128,9 +134,9 @@ const handleCallback = async (req, res) => {
     const payload = {
         grant_type: 'authorization_code',
         code: code,
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        redirect_uri: process.env.REDIRECT_URI,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
         code_verifier: codeVerifier
     };
 
@@ -140,7 +146,7 @@ const handleCallback = async (req, res) => {
         });
 
         const { access_token, instance_url } = response.data;
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const frontendUrl = FRONTEND_URL;
 
         return res.redirect(`${frontendUrl}/?access_token=${encodeURIComponent(access_token)}&instance_url=${encodeURIComponent(instance_url)}`);
     } catch (err) {
